@@ -6,7 +6,8 @@
     "dev": "concurrently -n \"server,client\" -c \"blue,green\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "seed": "node server/src/seed.js",
-    "build": "npm run build --prefix client"
+    "build": "npm install --prefix server",
+    "start": "node server/src/seed.js && node server/src/index.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
