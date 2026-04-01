@@ -1,0 +1,135 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api';
+import StatusBadge from '../components/StatusBadge';
+import { useAuth } from '../context/AuthContext';
+
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£' };
+function fmt(n, currency = 'USD') {
+  return `${CURRENCY_SYMBOLS[currency] || '$'}${parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function StatCard({ title, value, color, icon }) {
+  return (
+    <div className="card p-6">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium text-gray-500">{title}</span>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
+          {icon}
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/dashboard')
+      .then(res => setData(res.data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
+
+  const { stats, recent } = data;
+
+  return (
+    <div className="p-8">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Welcome back{user?.business_name ? `, ${user.business_name}` : ''}
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">Here's what's happening with your invoices.</p>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <StatCard
+          title="Total Revenue"
+          value={fmt(stats.total_revenue)}
+          color="bg-green-100"
+          icon={<svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
+        <StatCard
+          title="Outstanding"
+          value={fmt(stats.outstanding)}
+          color="bg-blue-100"
+          icon={<svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
+        <StatCard
+          title="Overdue"
+          value={fmt(stats.overdue)}
+          color="bg-red-100"
+          icon={<svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+        />
+        <StatCard
+          title="Total Invoices"
+          value={stats.total_invoices}
+          color="bg-purple-100"
+          icon={<svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+        />
+      </div>
+
+      {/* Recent invoices */}
+      <div className="card">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900">Recent Invoices</h2>
+          <Link to="/invoices/new" className="btn-primary text-xs py-1.5 px-3">
+            + New Invoice
+          </Link>
+        </div>
+
+        {recent.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-gray-400 text-sm">No invoices yet.</p>
+            <Link to="/invoices/new" className="btn-primary mt-4 inline-flex">Create your first invoice</Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoice</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {recent.map(inv => (
+                  <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link to={`/invoices/${inv.id}`} className="font-medium text-primary-600 hover:underline">
+                        {inv.invoice_number}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">
+                      <div>{inv.client_name}</div>
+                      {inv.client_company && <div className="text-xs text-gray-400">{inv.client_company}</div>}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{inv.due_date || '—'}</td>
+                    <td className="px-6 py-4"><StatusBadge status={inv.status} /></td>
+                    <td className="px-6 py-4 text-right font-semibold text-gray-900">{fmt(inv.total, inv.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
