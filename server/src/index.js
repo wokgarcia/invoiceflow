@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const db = require('./db');
 
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/clients');
@@ -18,6 +19,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/invoices', invoiceRoutes);
@@ -30,6 +33,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`InvoiceFlow server running on http://localhost:${PORT}`);
+// Auto-seed demo data if no users exist yet
+function autoSeed() {
+  try {
+    const count = db.prepare('SELECT COUNT(*) as c FROM users').get();
+    if (count.c === 0) {
+      console.log('Empty database detected — seeding demo data...');
+      require('./seed');
+    }
+  } catch (e) {
+    console.error('Auto-seed error:', e.message);
+  }
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`InvoiceFlow server running on port ${PORT}`);
+  autoSeed();
 });

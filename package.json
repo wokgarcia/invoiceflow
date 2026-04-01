@@ -7,7 +7,7 @@
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "seed": "node server/src/seed.js",
     "build": "npm install --prefix server",
-    "start": "node server/src/seed.js && node server/src/index.js"
+    "start": "node server/src/index.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
