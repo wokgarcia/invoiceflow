@@ -51,6 +51,14 @@ router.get('/:id', auth, (req, res) => {
 
 // POST /api/invoices
 router.post('/', auth, (req, res) => {
+  // Enforce free plan limit
+  const user = db.prepare('SELECT plan FROM users WHERE id = ?').get(req.user.id);
+  if (user.plan !== 'pro') {
+    const count = db.prepare('SELECT COUNT(*) as c FROM invoices WHERE user_id = ?').get(req.user.id);
+    if (count.c >= 3) {
+      return res.status(403).json({ error: 'Free plan limit reached. Upgrade to Pro for unlimited invoices.', upgrade: true });
+    }
+  }
   const {
     client_id,
     invoice_number,

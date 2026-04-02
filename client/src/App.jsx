@@ -12,6 +12,7 @@ import Invoices from './pages/Invoices';
 import InvoiceBuilder from './pages/InvoiceBuilder';
 import InvoiceView from './pages/InvoiceView';
 import Settings from './pages/Settings';
+import Billing from './pages/Billing';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/invoices/:id" element={<InvoiceView />} />
             <Route path="/invoices/:id/edit" element={<InvoiceBuilder />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/billing" element={<Billing />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -9,9 +9,13 @@ const invoiceRoutes = require('./routes/invoices');
 const settingsRoutes = require('./routes/settings');
 const dashboardRoutes = require('./routes/dashboard');
 const pdfRoutes = require('./routes/pdf');
+const stripeRoutes = require('./routes/stripe');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Stripe webhook needs raw body — must be before express.json()
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -27,13 +31,13 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Auto-seed demo data if no users exist yet
 function autoSeed() {
   try {
     const count = db.prepare('SELECT COUNT(*) as c FROM users').get();

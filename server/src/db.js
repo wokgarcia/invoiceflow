@@ -50,6 +50,9 @@ db.exec(`
     business_phone TEXT DEFAULT '',
     default_tax_rate REAL DEFAULT 0,
     default_payment_terms TEXT DEFAULT 'Net 30',
+    stripe_customer_id TEXT DEFAULT '',
+    stripe_subscription_id TEXT DEFAULT '',
+    plan TEXT DEFAULT 'free',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
