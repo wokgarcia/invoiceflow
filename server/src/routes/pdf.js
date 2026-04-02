@@ -168,10 +168,10 @@ router.get('/:id', auth, (req, res) => {
   }
 
   // ── Footer ───────────────────────────────────────────────────
-  const footerY = doc.page.height - 60;
+  const footerY = doc.page.height - 80;
   doc.moveTo(50, footerY).lineTo(50 + pageWidth, footerY).strokeColor('#E5E7EB').lineWidth(1).stroke();
   doc.fillColor(GRAY).fontSize(8).font('Helvetica')
-    .text('Thank you for your business!', 50, footerY + 10, { width: pageWidth, align: 'center' });
+    .text('Thank you for your business!', 50, footerY + 10, { width: pageWidth, align: 'center', lineBreak: false });
 
   doc.end();
 });
