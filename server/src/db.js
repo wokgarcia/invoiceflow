@@ -2,7 +2,7 @@ const { Database: WasmDatabase } = require('node-sqlite3-wasm');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, '../../data/invoiceflow.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../data/invoiceflow.db');
 const dataDir = path.dirname(DB_PATH);
 
 if (!fs.existsSync(dataDir)) {
