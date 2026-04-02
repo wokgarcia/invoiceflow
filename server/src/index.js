@@ -40,19 +40,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-function autoSeed() {
-  try {
-    const count = db.prepare('SELECT COUNT(*) as c FROM users').get();
-    if (count.c === 0) {
-      console.log('Empty database detected — seeding demo data...');
-      require('./seed');
-    }
-  } catch (e) {
-    console.error('Auto-seed error:', e.message);
-  }
-}
-
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`InvoiceFlow server running on port ${PORT}`);
-  autoSeed();
 });

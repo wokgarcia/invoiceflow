@@ -193,8 +193,13 @@ router.post('/:id', auth, async (req, res) => {
 
     res.json({ success: true, message: `Invoice sent to ${invoice.client_email}` });
   } catch (err) {
-    console.error('Email send error:', err);
-    res.status(500).json({ error: 'Failed to send email. Check EMAIL_USER and EMAIL_PASS are correct.' });
+    console.error('Email send error:', err.message, err.code, err.response);
+    const msg = err.code === 'EAUTH'
+      ? 'Gmail authentication failed. Go to Railway → Variables and make sure EMAIL_PASS is a Gmail App Password (not your regular password). Get one at myaccount.google.com/apppasswords.'
+      : err.code === 'ECONNECTION' || err.code === 'ETIMEDOUT'
+      ? 'Could not connect to Gmail. Try again in a moment.'
+      : `Failed to send email: ${err.message}`;
+    res.status(500).json({ error: msg });
   }
 });
 
