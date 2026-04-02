@@ -13,24 +13,27 @@ function fmt(amount, currency = 'USD') {
 }
 
 // GET /api/pdf/:id
-router.get('/:id', auth, (req, res) => {
-  const invoice = db.prepare(`
+router.get('/:id', auth, async (req, res) => {
+  const invResult = await db.query(`
     SELECT i.*, c.name as client_name, c.company as client_company,
            c.email as client_email, c.address as client_address
     FROM invoices i
     JOIN clients c ON i.client_id = c.id
-    WHERE i.id = ? AND i.user_id = ?
-  `).get(req.params.id, req.user.id);
+    WHERE i.id = $1 AND i.user_id = $2
+  `, [req.params.id, req.user.id]);
+  const invoice = invResult.rows[0];
 
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
 
-  const items = db.prepare(
-    'SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC'
-  ).all(invoice.id);
+  const itemsResult = await db.query(
+    'SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY id ASC', [invoice.id]
+  );
+  const items = itemsResult.rows;
 
-  const user = db.prepare(
-    'SELECT business_name, business_address, business_email, business_phone FROM users WHERE id = ?'
-  ).get(req.user.id);
+  const userResult = await db.query(
+    'SELECT business_name, business_address, business_email, business_phone FROM users WHERE id = $1', [req.user.id]
+  );
+  const user = userResult.rows[0];
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoice_number}.pdf"`);

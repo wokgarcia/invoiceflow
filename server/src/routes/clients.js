@@ -5,62 +5,70 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/clients
-router.get('/', auth, (req, res) => {
-  const clients = db.prepare(
-    'SELECT * FROM clients WHERE user_id = ? ORDER BY name ASC'
-  ).all(req.user.id);
-  res.json(clients);
+router.get('/', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM clients WHERE user_id = $1 ORDER BY name ASC', [req.user.id]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch clients' });
+  }
 });
 
 // GET /api/clients/:id
-router.get('/:id', auth, (req, res) => {
-  const client = db.prepare(
-    'SELECT * FROM clients WHERE id = ? AND user_id = ?'
-  ).get(req.params.id, req.user.id);
-  if (!client) return res.status(404).json({ error: 'Client not found' });
-  res.json(client);
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM clients WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Client not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch client' });
+  }
 });
 
 // POST /api/clients
-router.post('/', auth, (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { name, email = '', address = '', company = '' } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
-
-  const result = db.prepare(
-    'INSERT INTO clients (user_id, name, email, address, company) VALUES (?, ?, ?, ?, ?)'
-  ).run(req.user.id, name, email, address, company);
-
-  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json(client);
+  try {
+    const result = await db.query(
+      'INSERT INTO clients (user_id, name, email, address, company) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [req.user.id, name, email, address, company]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create client' });
+  }
 });
 
 // PUT /api/clients/:id
-router.put('/:id', auth, (req, res) => {
-  const existing = db.prepare(
-    'SELECT id FROM clients WHERE id = ? AND user_id = ?'
-  ).get(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'Client not found' });
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const existing = await db.query('SELECT id FROM clients WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!existing.rows[0]) return res.status(404).json({ error: 'Client not found' });
 
-  const { name, email = '', address = '', company = '' } = req.body;
-  if (!name) return res.status(400).json({ error: 'Name is required' });
+    const { name, email = '', address = '', company = '' } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
 
-  db.prepare(
-    'UPDATE clients SET name = ?, email = ?, address = ?, company = ? WHERE id = ?'
-  ).run(name, email, address, company, req.params.id);
-
-  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
-  res.json(client);
+    const result = await db.query(
+      'UPDATE clients SET name = $1, email = $2, address = $3, company = $4 WHERE id = $5 RETURNING *',
+      [name, email, address, company, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update client' });
+  }
 });
 
 // DELETE /api/clients/:id
-router.delete('/:id', auth, (req, res) => {
-  const existing = db.prepare(
-    'SELECT id FROM clients WHERE id = ? AND user_id = ?'
-  ).get(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'Client not found' });
-
-  db.prepare('DELETE FROM clients WHERE id = ?').run(req.params.id);
-  res.json({ success: true });
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const existing = await db.query('SELECT id FROM clients WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!existing.rows[0]) return res.status(404).json({ error: 'Client not found' });
+    await db.query('DELETE FROM clients WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete client' });
+  }
 });
 
 module.exports = router;

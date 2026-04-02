@@ -9,31 +9,35 @@ const PRICE_ID = process.env.STRIPE_PRICE_ID;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 const FREE_INVOICE_LIMIT = 3;
 
-// GET /api/stripe/status — get current plan
-router.get('/status', auth, (req, res) => {
-  const user = db.prepare('SELECT plan, stripe_customer_id, stripe_subscription_id FROM users WHERE id = ?').get(req.user.id);
-  const invoiceCount = db.prepare('SELECT COUNT(*) as c FROM invoices WHERE user_id = ?').get(req.user.id);
-  res.json({
-    plan: user.plan || 'free',
-    invoiceCount: invoiceCount.c,
-    invoiceLimit: FREE_INVOICE_LIMIT,
-    canCreateInvoice: user.plan === 'pro' || invoiceCount.c < FREE_INVOICE_LIMIT,
-  });
+// GET /api/stripe/status
+router.get('/status', auth, async (req, res) => {
+  try {
+    const userResult = await db.query('SELECT plan, stripe_customer_id, stripe_subscription_id FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
+    const countResult = await db.query('SELECT COUNT(*) as c FROM invoices WHERE user_id = $1', [req.user.id]);
+    const invoiceCount = parseInt(countResult.rows[0].c);
+    res.json({
+      plan: user.plan || 'free',
+      invoiceCount,
+      invoiceLimit: FREE_INVOICE_LIMIT,
+      canCreateInvoice: user.plan === 'pro' || invoiceCount < FREE_INVOICE_LIMIT,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get status' });
+  }
 });
 
-// POST /api/stripe/checkout — create Stripe checkout session
+// POST /api/stripe/checkout
 router.post('/checkout', auth, async (req, res) => {
   try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const userResult = await db.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
     let customerId = user.stripe_customer_id;
-
-    // Create Stripe customer if doesn't exist
     if (!customerId) {
       const customer = await stripe.customers.create({ email: user.email });
       customerId = customer.id;
-      db.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ?').run(customerId, req.user.id);
+      await db.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, req.user.id]);
     }
-
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -42,7 +46,6 @@ router.post('/checkout', auth, async (req, res) => {
       success_url: `${CLIENT_URL}/billing?success=1`,
       cancel_url: `${CLIENT_URL}/billing?canceled=1`,
     });
-
     res.json({ url: session.url });
   } catch (err) {
     console.error('Stripe checkout error:', err.message);
@@ -50,13 +53,12 @@ router.post('/checkout', auth, async (req, res) => {
   }
 });
 
-// POST /api/stripe/portal — customer billing portal
+// POST /api/stripe/portal
 router.post('/portal', auth, async (req, res) => {
   try {
-    const user = db.prepare('SELECT stripe_customer_id FROM users WHERE id = ?').get(req.user.id);
-    if (!user.stripe_customer_id) {
-      return res.status(400).json({ error: 'No billing account found' });
-    }
+    const result = await db.query('SELECT stripe_customer_id FROM users WHERE id = $1', [req.user.id]);
+    const user = result.rows[0];
+    if (!user.stripe_customer_id) return res.status(400).json({ error: 'No billing account found' });
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripe_customer_id,
       return_url: `${CLIENT_URL}/billing`,
@@ -68,11 +70,10 @@ router.post('/portal', auth, async (req, res) => {
   }
 });
 
-// POST /api/stripe/webhook — handle Stripe events
-router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+// POST /api/stripe/webhook
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
@@ -82,28 +83,28 @@ router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
 
   const getCustomerId = (obj) => obj?.customer;
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-    case 'invoice.paid': {
-      const customerId = getCustomerId(event.data.object);
-      const subId = event.data.object.subscription || event.data.object.id;
-      if (customerId) {
-        db.prepare('UPDATE users SET plan = ?, stripe_subscription_id = ? WHERE stripe_customer_id = ?')
-          .run('pro', subId || '', customerId);
-        console.log(`Upgraded customer ${customerId} to pro`);
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+      case 'invoice.paid': {
+        const customerId = getCustomerId(event.data.object);
+        const subId = event.data.object.subscription || event.data.object.id;
+        if (customerId) {
+          await db.query('UPDATE users SET plan = $1, stripe_subscription_id = $2 WHERE stripe_customer_id = $3', ['pro', subId || '', customerId]);
+        }
+        break;
       }
-      break;
-    }
-    case 'customer.subscription.deleted':
-    case 'invoice.payment_failed': {
-      const customerId = getCustomerId(event.data.object);
-      if (customerId) {
-        db.prepare('UPDATE users SET plan = ?, stripe_subscription_id = ? WHERE stripe_customer_id = ?')
-          .run('free', '', customerId);
-        console.log(`Downgraded customer ${customerId} to free`);
+      case 'customer.subscription.deleted':
+      case 'invoice.payment_failed': {
+        const customerId = getCustomerId(event.data.object);
+        if (customerId) {
+          await db.query('UPDATE users SET plan = $1, stripe_subscription_id = $2 WHERE stripe_customer_id = $3', ['free', '', customerId]);
+        }
+        break;
       }
-      break;
     }
+  } catch (err) {
+    console.error('Webhook db error:', err);
   }
 
   res.json({ received: true });
