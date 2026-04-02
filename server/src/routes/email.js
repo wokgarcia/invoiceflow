@@ -1,5 +1,5 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const PDFDocument = require('pdfkit');
 const db = require('../db');
 const auth = require('../middleware/auth');
@@ -131,8 +131,8 @@ function buildPdfBuffer(invoice, items, user) {
 
 // POST /api/email/:id  — send invoice PDF to client's email
 router.post('/:id', auth, async (req, res) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    return res.status(503).json({ error: 'Email not configured. Add EMAIL_USER and EMAIL_PASS in Railway.' });
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(503).json({ error: 'Email not configured. Add RESEND_API_KEY in Railway Variables.' });
   }
 
   const invResult = await db.query(`
@@ -157,23 +157,15 @@ router.post('/:id', auth, async (req, res) => {
   try {
     const pdfBuffer = await buildPdfBuffer(invoice, items, user);
 
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 30000,
-    });
-
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const bizName = user.business_name || 'InvoiceFlow';
-    const replyTo = user.business_email || process.env.EMAIL_USER;
+    const fromAddress = process.env.EMAIL_FROM || 'InvoiceFlow <onboarding@resend.dev>';
+    const replyTo = user.business_email || undefined;
 
-    await transporter.sendMail({
-      from: `"${bizName}" <${process.env.EMAIL_USER}>`,
-      to: invoice.client_email,
-      replyTo,
+    const { error } = await resend.emails.send({
+      from: fromAddress,
+      to: [invoice.client_email],
+      reply_to: replyTo,
       subject: `Invoice ${invoice.invoice_number} from ${bizName}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
@@ -188,8 +180,16 @@ router.post('/:id', auth, async (req, res) => {
           <p style="color:#111827;font-weight:bold;">${bizName}</p>
         </div>
       `,
-      attachments: [{ filename: `${invoice.invoice_number}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
+      attachments: [{
+        filename: `${invoice.invoice_number}.pdf`,
+        content: pdfBuffer.toString('base64'),
+      }],
     });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return res.status(500).json({ error: `Failed to send email: ${error.message}` });
+    }
 
     // Auto-mark as Sent if it was Draft
     if (invoice.status === 'Draft') {
@@ -198,13 +198,8 @@ router.post('/:id', auth, async (req, res) => {
 
     res.json({ success: true, message: `Invoice sent to ${invoice.client_email}` });
   } catch (err) {
-    console.error('Email send error:', err.message, err.code, err.response);
-    const msg = err.code === 'EAUTH'
-      ? 'Gmail authentication failed. Go to Railway → Variables and make sure EMAIL_PASS is a Gmail App Password (not your regular password). Get one at myaccount.google.com/apppasswords.'
-      : err.code === 'ECONNECTION' || err.code === 'ETIMEDOUT'
-      ? 'Could not connect to Gmail. Try again in a moment.'
-      : `Failed to send email: ${err.message}`;
-    res.status(500).json({ error: msg });
+    console.error('Email send error:', err.message);
+    res.status(500).json({ error: `Failed to send email: ${err.message}` });
   }
 });
 
