@@ -57,8 +57,8 @@ router.get('/:id', auth, (req, res) => {
     .text(bizName, 70, 65, { width: pageWidth - 40, align: 'right' });
 
   doc.fontSize(9).font('Helvetica')
-    .text(user.business_address || '', 70, 83, { width: pageWidth - 40, align: 'right' })
-    .text([user.business_email, user.business_phone].filter(Boolean).join('  ·  '), 70, 95, { width: pageWidth - 40, align: 'right' });
+    .text(user.business_address || '', 70, 83, { width: pageWidth - 40, align: 'right', lineBreak: false })
+    .text([user.business_email, user.business_phone].filter(Boolean).join('  ·  '), 70, 99, { width: pageWidth - 40, align: 'right' });
 
   // ── Invoice meta block ───────────────────────────────────────
   let y = 150;
@@ -128,24 +128,26 @@ router.get('/:id', auth, (req, res) => {
   const totalsX = 360;
   const totalsW = pageWidth - 310;
 
+  const labelW = totalsW - 75;  // labels end ~470px, values end at 545px (right margin)
   doc.fillColor(GRAY).fontSize(9).font('Helvetica')
-    .text('Subtotal', totalsX, y, { width: totalsW, align: 'right' });
+    .text('Subtotal', totalsX, y, { width: labelW, align: 'right' });
   doc.fillColor(DARK).fontSize(9).font('Helvetica')
-    .text(fmt(invoice.subtotal, invoice.currency), totalsX, y, { width: totalsW + 50, align: 'right' });
+    .text(fmt(invoice.subtotal, invoice.currency), totalsX, y, { width: totalsW, align: 'right' });
   y += 15;
 
   if (parseFloat(invoice.tax_rate) > 0) {
-    doc.fillColor(GRAY).text(`Tax (${invoice.tax_rate}%)`, totalsX, y, { width: totalsW, align: 'right' });
-    doc.fillColor(DARK).text(fmt(invoice.tax_amount, invoice.currency), totalsX, y, { width: totalsW + 50, align: 'right' });
+    doc.fillColor(GRAY).text(`Tax (${invoice.tax_rate}%)`, totalsX, y, { width: labelW, align: 'right' });
+    doc.fillColor(DARK).text(fmt(invoice.tax_amount, invoice.currency), totalsX, y, { width: totalsW, align: 'right' });
     y += 15;
   }
 
   // Total row
   y += 5;
-  doc.rect(totalsX - 10, y - 5, totalsW + 60, 30).fill(BLUE);
+  doc.rect(totalsX - 10, y - 5, totalsW + 10, 30).fill(BLUE);
   doc.fillColor('white').fontSize(11).font('Helvetica-Bold')
-    .text('TOTAL', totalsX, y + 4, { width: totalsW, align: 'right' })
-    .text(fmt(invoice.total, invoice.currency), totalsX, y + 4, { width: totalsW + 50, align: 'right' });
+    .text('TOTAL', totalsX, y + 4, { width: labelW, align: 'right' });
+  doc.fillColor('white').fontSize(11).font('Helvetica-Bold')
+    .text(fmt(invoice.total, invoice.currency), totalsX, y + 4, { width: totalsW, align: 'right' });
   y += 40;
 
   // ── Payment terms & notes ─────────────────────────────────────
