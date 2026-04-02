@@ -53,8 +53,8 @@ export default function Billing() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage your plan and subscription.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Billing</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage your plan and subscription.</p>
       </div>
 
       {success && (
@@ -72,20 +72,20 @@ export default function Billing() {
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 font-medium uppercase tracking-wide">Current Plan</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Current Plan</p>
             <div className="flex items-center gap-2 mt-1">
-              <p className="text-2xl font-bold text-gray-900">{isPro ? 'Pro' : 'Free'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{isPro ? 'Pro' : 'Free'}</p>
               {isPro && (
                 <span className="bg-primary-100 text-primary-700 text-xs font-semibold px-2 py-0.5 rounded-full">Active</span>
               )}
             </div>
             {!isPro && (
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {status?.invoiceCount ?? 0} / 3 invoices used
               </p>
             )}
             {isPro && (
-              <p className="text-sm text-gray-500 mt-1">Unlimited invoices · $9/month</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Unlimited invoices · $9/month</p>
             )}
           </div>
           {isPro && (
@@ -97,13 +97,13 @@ export default function Billing() {
 
         {!isPro && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="w-full bg-gray-100 rounded-full h-2 mb-1">
+            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-1">
               <div
                 className="bg-primary-600 h-2 rounded-full transition-all"
                 style={{ width: `${Math.min(((status?.invoiceCount ?? 0) / 3) * 100, 100)}%` }}
               />
             </div>
-            <p className="text-xs text-gray-400">{3 - (status?.invoiceCount ?? 0)} invoice{3 - (status?.invoiceCount ?? 0) !== 1 ? 's' : ''} remaining on free plan</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{3 - (status?.invoiceCount ?? 0)} invoice{3 - (status?.invoiceCount ?? 0) !== 1 ? 's' : ''} remaining on free plan</p>
           </div>
         )}
       </div>
@@ -113,9 +113,9 @@ export default function Billing() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Free */}
           <div className="card p-6 opacity-60">
-            <p className="font-semibold text-gray-900 mb-1">Free</p>
-            <p className="text-2xl font-bold text-gray-900 mb-4">$0<span className="text-sm font-normal text-gray-500">/mo</span></p>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <p className="font-semibold text-gray-900 dark:text-white mb-1">Free</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">$0<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mo</span></p>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               {['Up to 3 invoices', 'Client management', 'PDF export', 'Basic dashboard'].map(f => (
                 <li key={f} className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -124,16 +124,16 @@ export default function Billing() {
               ))}
             </ul>
             <div className="mt-6">
-              <div className="w-full py-2 text-center text-sm text-gray-400 font-medium border border-gray-200 rounded-lg">Current plan</div>
+              <div className="w-full py-2 text-center text-sm text-gray-400 dark:text-gray-500 font-medium border border-gray-200 dark:border-gray-700 rounded-lg">Current plan</div>
             </div>
           </div>
 
           {/* Pro */}
           <div className="card p-6 border-primary-500 ring-2 ring-primary-500 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full">RECOMMENDED</div>
-            <p className="font-semibold text-gray-900 mb-1">Pro</p>
-            <p className="text-2xl font-bold text-gray-900 mb-4">$9<span className="text-sm font-normal text-gray-500">/mo</span></p>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <p className="font-semibold text-gray-900 dark:text-white mb-1">Pro</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">$9<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mo</span></p>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               {['Unlimited invoices', 'Client management', 'PDF export', 'Full dashboard', 'Priority support'].map(f => (
                 <li key={f} className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>

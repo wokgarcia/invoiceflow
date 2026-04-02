@@ -10,6 +10,7 @@ const settingsRoutes = require('./routes/settings');
 const dashboardRoutes = require('./routes/dashboard');
 const pdfRoutes = require('./routes/pdf');
 const stripeRoutes = require('./routes/stripe');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/email', emailRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -143,12 +143,12 @@ export default function InvoiceBuilder() {
     <div className="p-8 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Link to="/invoices" className="text-gray-400 hover:text-gray-600 transition-colors">
+        <Link to="/invoices" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Invoice' : 'New Invoice'}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditing ? 'Edit Invoice' : 'New Invoice'}</h1>
       </div>
 
       {limitHit && (
@@ -175,7 +175,7 @@ export default function InvoiceBuilder() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left: Client + Invoice details */}
           <div className="card p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Invoice Details</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Invoice Details</h2>
 
             <div>
               <label className="label">Client <span className="text-red-500">*</span></label>
@@ -231,7 +231,7 @@ export default function InvoiceBuilder() {
 
           {/* Right: Financial details */}
           <div className="card p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Financial</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Financial</h2>
 
             <div>
               <label className="label">Currency</label>
@@ -277,10 +277,10 @@ export default function InvoiceBuilder() {
 
         {/* Line items */}
         <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Line Items</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Line Items</h2>
 
           {/* Header row */}
-          <div className="hidden md:grid grid-cols-12 gap-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
+          <div className="hidden md:grid grid-cols-12 gap-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1">
             <div className="col-span-5">Description</div>
             <div className="col-span-2 text-right">Quantity</div>
             <div className="col-span-2 text-right">Unit Price</div>
@@ -326,7 +326,7 @@ export default function InvoiceBuilder() {
                       />
                     </div>
                   </div>
-                  <div className="col-span-3 md:col-span-2 text-right font-medium text-gray-700 pr-1">
+                  <div className="col-span-3 md:col-span-2 text-right font-medium text-gray-700 dark:text-gray-300 pr-1">
                     {sym}{amount.toFixed(2)}
                   </div>
                   <div className="col-span-1 flex justify-end">
@@ -361,17 +361,17 @@ export default function InvoiceBuilder() {
           {/* Totals */}
           <div className="mt-6 border-t border-gray-100 pt-6 flex justify-end">
             <div className="w-64 space-y-2 text-sm">
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal</span>
                 <span>{sym}{subtotal.toFixed(2)}</span>
               </div>
               {parseFloat(form.tax_rate) > 0 && (
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tax ({form.tax_rate}%)</span>
                   <span>{sym}{taxAmount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2">
+              <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base border-t border-gray-200 dark:border-gray-700 pt-2">
                 <span>Total</span>
                 <span>{sym}{total.toFixed(2)}</span>
               </div>

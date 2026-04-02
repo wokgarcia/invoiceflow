@@ -61,14 +61,14 @@ export default function Settings() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 text-sm mt-1">Your business profile and invoice defaults.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Your business profile and invoice defaults.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Business Info */}
         <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-5">Business Information</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-5">Business Information</h2>
           <div className="space-y-4">
             <div>
               <label className="label">Business Name</label>
@@ -115,7 +115,7 @@ export default function Settings() {
 
         {/* Invoice Defaults */}
         <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-5">Invoice Defaults</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-5">Invoice Defaults</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Default Tax Rate (%)</label>
@@ -149,10 +149,10 @@ export default function Settings() {
 
         {/* Feedback */}
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">{error}</div>
         )}
         {success && (
-          <div className="bg-green-50 text-green-700 text-sm px-4 py-3 rounded-lg border border-green-200">Settings saved successfully.</div>
+          <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm px-4 py-3 rounded-lg border border-green-200 dark:border-green-800">Settings saved successfully.</div>
         )}
 
         <div className="flex justify-end">

@@ -17,6 +17,8 @@ export default function InvoiceView() {
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [emailMsg, setEmailMsg] = useState('');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,23 @@ export default function InvoiceView() {
     }
   };
 
+  const handleSendEmail = async () => {
+    setSending(true);
+    setEmailMsg('');
+    try {
+      const res = await api.post(`/email/${id}`);
+      setEmailMsg(res.data.message);
+      // Update status to Sent if it was Draft
+      if (invoice.status === 'Draft') {
+        setInvoice(inv => ({ ...inv, status: 'Sent' }));
+      }
+    } catch (err) {
+      setEmailMsg(err.response?.data?.error || 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm(`Delete invoice ${invoice.invoice_number}? This cannot be undone.`)) return;
     try {
@@ -89,24 +108,24 @@ export default function InvoiceView() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-3">
-          <Link to="/invoices" className="text-gray-400 hover:text-gray-600 transition-colors">
+          <Link to="/invoices" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{invoice.invoice_number}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{invoice.invoice_number}</h1>
               <StatusBadge status={invoice.status} />
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {invoice.client_name}{invoice.client_company ? ` · ${invoice.client_company}` : ''}
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Status dropdown */}
           <div className="relative">
             <button
@@ -120,12 +139,12 @@ export default function InvoiceView() {
               </svg>
             </button>
             {showStatusMenu && (
-              <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
+              <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1">
                 {STATUSES.filter(s => s !== invoice.status).map(s => (
                   <button
                     key={s}
                     onClick={() => handleStatusChange(s)}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                   >
                     Mark as {s}
                   </button>
@@ -137,6 +156,14 @@ export default function InvoiceView() {
           <Link to={`/invoices/${id}/edit`} className="btn-secondary text-sm">Edit</Link>
 
           <button
+            onClick={handleSendEmail}
+            disabled={sending}
+            className="btn-secondary text-sm"
+          >
+            {sending ? 'Sending…' : '✉ Send Email'}
+          </button>
+
+          <button
             onClick={handleDownloadPdf}
             disabled={downloading}
             className="btn-primary text-sm"
@@ -146,12 +173,23 @@ export default function InvoiceView() {
 
           <button
             onClick={handleDelete}
-            className="btn-ghost text-sm text-red-500 hover:bg-red-50 hover:text-red-600"
+            className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600"
           >
             Delete
           </button>
         </div>
       </div>
+
+      {/* Email feedback */}
+      {emailMsg && (
+        <div className={`mb-6 px-4 py-3 rounded-lg text-sm border ${
+          emailMsg.includes('sent') || emailMsg.includes('Sent')
+            ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+            : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+        }`}>
+          {emailMsg}
+        </div>
+      )}
 
       {/* Invoice card */}
       <div className="card overflow-hidden">
@@ -171,30 +209,30 @@ export default function InvoiceView() {
         <div className="p-8">
           {/* Client info */}
           <div className="mb-8">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Bill To</p>
-            <p className="font-semibold text-gray-900">{invoice.client_name}</p>
-            {invoice.client_company && <p className="text-gray-500 text-sm">{invoice.client_company}</p>}
-            {invoice.client_address && <p className="text-gray-500 text-sm">{invoice.client_address}</p>}
-            {invoice.client_email && <p className="text-gray-500 text-sm">{invoice.client_email}</p>}
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Bill To</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{invoice.client_name}</p>
+            {invoice.client_company && <p className="text-gray-500 dark:text-gray-400 text-sm">{invoice.client_company}</p>}
+            {invoice.client_address && <p className="text-gray-500 dark:text-gray-400 text-sm">{invoice.client_address}</p>}
+            {invoice.client_email && <p className="text-gray-500 dark:text-gray-400 text-sm">{invoice.client_email}</p>}
           </div>
 
           {/* Line items */}
           <table className="w-full text-sm mb-6">
             <thead>
-              <tr className="bg-gray-50 border-y border-gray-100">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit Price</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+              <tr className="bg-gray-50 dark:bg-gray-700/50 border-y border-gray-100 dark:border-gray-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Description</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Qty</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Unit Price</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
               {invoice.items.map(item => (
                 <tr key={item.id}>
-                  <td className="px-4 py-3 text-gray-800">{item.description}</td>
-                  <td className="px-4 py-3 text-right text-gray-600">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right text-gray-600">{fmt(item.unit_price, invoice.currency)}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">{fmt(item.amount, invoice.currency)}</td>
+                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{item.description}</td>
+                  <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{item.quantity}</td>
+                  <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{fmt(item.unit_price, invoice.currency)}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{fmt(item.amount, invoice.currency)}</td>
                 </tr>
               ))}
             </tbody>
@@ -203,28 +241,28 @@ export default function InvoiceView() {
           {/* Totals */}
           <div className="flex justify-end">
             <div className="w-64 space-y-2 text-sm">
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal</span>
                 <span>{fmt(invoice.subtotal, invoice.currency)}</span>
               </div>
               {parseFloat(invoice.tax_rate) > 0 && (
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tax ({invoice.tax_rate}%)</span>
                   <span>{fmt(invoice.tax_amount, invoice.currency)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-3 mt-3">
+              <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                 <span>Total</span>
-                <span className="text-primary-700">{fmt(invoice.total, invoice.currency)}</span>
+                <span className="text-primary-700 dark:text-primary-400">{fmt(invoice.total, invoice.currency)}</span>
               </div>
             </div>
           </div>
 
           {/* Notes */}
           {invoice.notes && (
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Notes</p>
-              <p className="text-gray-600 text-sm">{invoice.notes}</p>
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Notes</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">{invoice.notes}</p>
             </div>
           )}
         </div>

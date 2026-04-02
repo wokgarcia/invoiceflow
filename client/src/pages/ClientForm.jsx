@@ -56,20 +56,20 @@ export default function ClientForm() {
   return (
     <div className="p-8 max-w-xl">
       <div className="flex items-center gap-3 mb-8">
-        <Link to="/clients" className="text-gray-400 hover:text-gray-600 transition-colors">
+        <Link to="/clients" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Client' : 'New Client'}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditing ? 'Edit Client' : 'New Client'}</h1>
         </div>
       </div>
 
       <div className="card p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">{error}</div>
           )}
 
           <div>
