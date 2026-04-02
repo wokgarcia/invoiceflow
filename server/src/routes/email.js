@@ -1,5 +1,5 @@
 const express = require('express');
-const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 const PDFDocument = require('pdfkit');
 const db = require('../db');
 const auth = require('../middleware/auth');
@@ -131,8 +131,8 @@ function buildPdfBuffer(invoice, items, user) {
 
 // POST /api/email/:id  — send invoice PDF to client's email
 router.post('/:id', auth, async (req, res) => {
-  if (!process.env.RESEND_API_KEY) {
-    return res.status(503).json({ error: 'Email not configured. Add RESEND_API_KEY in Railway Variables.' });
+  if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_FROM) {
+    return res.status(503).json({ error: 'Email not configured. Add SENDGRID_API_KEY and EMAIL_FROM in Railway Variables.' });
   }
 
   const invResult = await db.query(`
@@ -157,15 +157,14 @@ router.post('/:id', auth, async (req, res) => {
   try {
     const pdfBuffer = await buildPdfBuffer(invoice, items, user);
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const bizName = user.business_name || 'InvoiceFlow';
-    const fromAddress = process.env.EMAIL_FROM || 'InvoiceFlow <onboarding@resend.dev>';
-    const replyTo = user.business_email || undefined;
+    const replyTo = user.business_email || process.env.EMAIL_FROM;
 
-    const { error } = await resend.emails.send({
-      from: fromAddress,
-      to: [invoice.client_email],
-      reply_to: replyTo,
+    await sgMail.send({
+      from: { email: process.env.EMAIL_FROM, name: bizName },
+      to: invoice.client_email,
+      replyTo,
       subject: `Invoice ${invoice.invoice_number} from ${bizName}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
@@ -183,13 +182,10 @@ router.post('/:id', auth, async (req, res) => {
       attachments: [{
         filename: `${invoice.invoice_number}.pdf`,
         content: pdfBuffer.toString('base64'),
+        type: 'application/pdf',
+        disposition: 'attachment',
       }],
     });
-
-    if (error) {
-      console.error('Resend error:', error);
-      return res.status(500).json({ error: `Failed to send email: ${error.message}` });
-    }
 
     // Auto-mark as Sent if it was Draft
     if (invoice.status === 'Draft') {
@@ -198,8 +194,9 @@ router.post('/:id', auth, async (req, res) => {
 
     res.json({ success: true, message: `Invoice sent to ${invoice.client_email}` });
   } catch (err) {
-    console.error('Email send error:', err.message);
-    res.status(500).json({ error: `Failed to send email: ${err.message}` });
+    const msg = err.response ? JSON.stringify(err.response.body) : err.message;
+    console.error('Email send error:', msg);
+    res.status(500).json({ error: `Failed to send email: ${msg}` });
   }
 });
 
