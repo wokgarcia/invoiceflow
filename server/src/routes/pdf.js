@@ -72,15 +72,17 @@ router.get('/:id', auth, (req, res) => {
 
   // Invoice number, dates (right aligned)
   const metaX = 350;
+  const metaLabelW = 110;
+  const metaValueW = 200;
   doc.fillColor(GRAY).fontSize(9).font('Helvetica')
-    .text('Invoice Number', metaX, y, { width: 200, align: 'right' })
-    .text('Issue Date', metaX, y + 16, { width: 200, align: 'right' })
-    .text('Due Date', metaX, y + 32, { width: 200, align: 'right' });
+    .text('Invoice Number', metaX, y, { width: metaLabelW, align: 'right' })
+    .text('Issue Date', metaX, y + 16, { width: metaLabelW, align: 'right' })
+    .text('Due Date', metaX, y + 32, { width: metaLabelW, align: 'right' });
 
   doc.fillColor(DARK).fontSize(9).font('Helvetica-Bold')
-    .text(invoice.invoice_number, metaX, y, { width: 200, align: 'right' })
-    .text(invoice.issue_date || '—', metaX, y + 16, { width: 200, align: 'right' })
-    .text(invoice.due_date || '—', metaX, y + 32, { width: 200, align: 'right' });
+    .text(invoice.invoice_number, metaX, y, { width: metaValueW, align: 'right' })
+    .text(invoice.issue_date || '—', metaX, y + 16, { width: metaValueW, align: 'right' })
+    .text(invoice.due_date || '—', metaX, y + 32, { width: metaValueW, align: 'right' });
 
   // ── Bill To ─────────────────────────────────────────────────
   y = 215;

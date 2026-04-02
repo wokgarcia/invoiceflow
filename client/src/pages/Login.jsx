@@ -85,11 +85,6 @@ export default function Login() {
             </Link>
           </p>
         </div>
-
-        {/* Demo hint */}
-        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-          Demo: demo@test.com / demo1234
-        </p>
       </div>
     </div>
   );
