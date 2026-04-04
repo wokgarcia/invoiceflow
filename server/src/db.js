@@ -1,8 +1,14 @@
 const { Pool } = require('pg');
 
+const dbUrl = process.env.DATABASE_URL || '';
+const isLocal = !dbUrl ||
+  dbUrl.includes('localhost') ||
+  dbUrl.includes('127.0.0.1') ||
+  dbUrl.includes('.railway.internal');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  connectionString: dbUrl || undefined,
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 });
 
 async function initDb() {
