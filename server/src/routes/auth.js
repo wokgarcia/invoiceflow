@@ -9,7 +9,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'invoiceflow_super_secret_key_chang
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email: rawEmail, password } = req.body;
+  const email = rawEmail?.trim().toLowerCase();
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
   try {
@@ -36,7 +37,8 @@ router.post('/register', async (req, res) => {
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email: rawEmail, password } = req.body;
+  const email = rawEmail?.trim().toLowerCase();
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
   try {
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
