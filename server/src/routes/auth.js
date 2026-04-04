@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
   const email = rawEmail?.trim().toLowerCase();
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
   try {
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [email]);
     const user = result.rows[0];
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid email or password' });
