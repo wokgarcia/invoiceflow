@@ -44,8 +44,8 @@ export default function Invoices() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-8 page-enter">
+      <div className="flex items-center justify-between mb-6 animate-fade-in-up stagger-1">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Invoices</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''} total</p>
@@ -54,15 +54,15 @@ export default function Invoices() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit animate-fade-in-up stagger-2">
         {STATUSES.map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               filter === s
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm scale-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-600/50'
             }`}
           >
             {s}
@@ -71,7 +71,7 @@ export default function Invoices() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-16 text-center animate-scale-in">
           <p className="text-gray-400 dark:text-gray-500 text-sm">
             {invoices.length === 0 ? 'No invoices yet.' : `No ${filter.toLowerCase()} invoices.`}
           </p>
@@ -80,7 +80,7 @@ export default function Invoices() {
           )}
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden animate-fade-in-up stagger-3">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700">
@@ -94,8 +94,11 @@ export default function Invoices() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-              {filtered.map(inv => (
-                <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              {filtered.map((inv, i) => (
+                <tr
+                  key={inv.id}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-150 animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+                >
                   <td className="px-6 py-4">
                     <Link to={`/invoices/${inv.id}`} className="font-medium text-primary-600 hover:underline">
                       {inv.invoice_number}
@@ -117,7 +120,9 @@ export default function Invoices() {
                         disabled={deletingId === inv.id}
                         className="btn-ghost text-xs py-1 px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600"
                       >
-                        Delete
+                        {deletingId === inv.id ? (
+                          <span className="animate-pulse">...</span>
+                        ) : 'Delete'}
                       </button>
                     </div>
                   </td>

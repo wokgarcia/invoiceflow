@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import StatusBadge from '../components/StatusBadge';
@@ -19,7 +19,20 @@ export default function InvoiceView() {
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
   const [emailMsg, setEmailMsg] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const statusMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showStatusMenu) return;
+    const handler = e => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target)) {
+        setShowStatusMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showStatusMenu]);
 
   useEffect(() => {
     api.get(`/invoices/${id}`)
@@ -67,14 +80,16 @@ export default function InvoiceView() {
   const handleSendEmail = async () => {
     setSending(true);
     setEmailMsg('');
+    setEmailSuccess(false);
     try {
       const res = await api.post(`/email/${id}`);
+      setEmailSuccess(true);
       setEmailMsg(res.data.message);
-      // Update status to Sent if it was Draft
       if (invoice.status === 'Draft') {
         setInvoice(inv => ({ ...inv, status: 'Sent' }));
       }
     } catch (err) {
+      setEmailSuccess(false);
       setEmailMsg(err.response?.data?.error || 'Failed to send email');
     } finally {
       setSending(false);
@@ -104,7 +119,7 @@ export default function InvoiceView() {
   const sym = CURRENCY_SYMBOLS[invoice.currency] || '$';
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-4xl page-enter">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-3">
@@ -127,7 +142,7 @@ export default function InvoiceView() {
         {/* Actions */}
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Status dropdown */}
-          <div className="relative">
+          <div className="relative" ref={statusMenuRef}>
             <button
               onClick={() => setShowStatusMenu(v => !v)}
               disabled={updatingStatus}
@@ -139,7 +154,7 @@ export default function InvoiceView() {
               </svg>
             </button>
             {showStatusMenu && (
-              <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1">
+              <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1 animate-scale-in">
                 {STATUSES.filter(s => s !== invoice.status).map(s => (
                   <button
                     key={s}
@@ -183,7 +198,7 @@ export default function InvoiceView() {
       {/* Email feedback */}
       {emailMsg && (
         <div className={`mb-6 px-4 py-3 rounded-lg text-sm border ${
-          emailMsg.includes('sent') || emailMsg.includes('Sent')
+          emailSuccess
             ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
             : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
         }`}>
